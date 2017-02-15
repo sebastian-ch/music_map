@@ -50,8 +50,9 @@
 
     <h1>finally u can look at a map of virginia AND play the piano</h1>
     <div id='map'></div>
-
+    
     <script>
+        
         var piano = Synth.createInstrument('piano');
 
         var options = {
@@ -59,6 +60,15 @@
             zoomControl: false,
             dragging: false,
             scrollWheelZoom: false
+        };
+        
+        var styleOptions = {
+            
+            color: '#1f78b4',
+            fillColor: '#dddddd',
+            weight: 1,
+            fillOpacity: 1
+            
         };
 
         var map = L.map('map', options);
@@ -97,8 +107,6 @@
                     };
                 };
             };
-
-            //console.log(counties);
             
             drawMap(counties);
         }
@@ -106,20 +114,13 @@
         function drawMap(counties) {
 
             var dataLayer = L.geoJson(counties, {
-                style: function(feature) {
-                    return {
-                        color: '#1f78b4',
-                        weight: 1,
-                        fillOpacity: 1,
-                        fillColor: '#dddddd'
-                    };
-
-                }
+                
+                style:  styleOptions 
+                
             }).addTo(map);
 
             map.fitBounds(dataLayer.getBounds());
             map.setZoom(map.getZoom());
-
 
             dataLayer.eachLayer(function(layer) {
 
@@ -137,39 +138,32 @@
 
                 layer.on('mouseout', function() {
 
-                    this.setStyle({
-                        color: '#1f78b4',
-                        fillColor: '#dddddd',
-                        weight: 1
-                    });
+                    this.setStyle(styleOptions);
                 });
 
                 layer.on('mousedown', function() {
                     
                     playPiano(this);
-                    
-                    this.setStyle({
-                        color: '#1f78b4',
-                        fillColor: '#000'
-                    });
-                    
-                    layer.bringToFront();
                 });
                 
                 layer.on('mouseup', function () {
                     
-                    this.setStyle({
-                        color: '#1f78b4',
-                        fillColor: '#dddddd'
-    
-                    }); 
+                    this.setStyle(styleOptions); 
                 });
             });
         }
 
         function playPiano(x) {
             
+            x.setStyle({
+                color: '#1f78b4',
+                fillColor: '#000'
+            });
+            
+            x.bringToFront();
+            
             var props = x.feature.properties;
+            
             piano.play(props['key'], props['octave'], 2);
         }
 
