@@ -62,6 +62,8 @@
         };
 
         var map = L.map('map', options);
+        
+        map.doubleClickZoom.disable(); 
 
         $.getJSON('va.json', function(counties) {
 
