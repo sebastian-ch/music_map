@@ -9,85 +9,84 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
 
-    <script src="script/audiosynth.js"></script>
+    <script src="script/Tone.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
     <script src="https://code.jquery.com/jquery-1.12.2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
 
-
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: whitesmoke;
-            font-family: "Noto Sans", sans-serif;
-            color: #3d3d3d;
-        }
-        
-        section {
-            width: 960px;
-            margin: 20px auto;
-        }
-        
-        h1 {
-            width: 960px;
-            margin: 20px auto;
-            font-family: "Lora", serif;
-        }
-        
-        #map {
-            width: 80%;
-            height: 540px;
-            margin: 10px auto 10px auto;
-            background: whitesmoke;
-            border: 2px solid #dddedf;
-        }
-
-    </style>
+<style>
+    
+    html {
+        margin: 10px auto 10px auto;
+        width: 80%;
+        font-family: "Noto Sans", sans-serif;
+    }
+    body {
+        padding: 0;
+        background: whitesmoke;
+        color: #3d3d3d;
+    }
+    
+    h1 {
+        font-family: "Noto Sans", sans-serif;
+      /*  text-align: center; */
+    }
+    
+    #map {
+       /* width: 80%; */
+        height: 540px;
+        background: whitesmoke;
+        border: 2px solid #dddedf;
+    }
+    
+</style>
 </head>
 
 <body>
 
     <h1>finally u can look at a map of virginia AND play the piano</h1>
     <div id='map'></div>
-    
-    <script>
-        
-        var piano = Synth.createInstrument('piano');
+    <br>
+    <button id='c4'>C Chord</button>
+    <footer>
+        <p>Inspired by <a href="http://andywoodruff.com/blog/the-music-of-geography-ohio-is-a-piano/" target="_blank">Andy Woodruff -The Music of Geography</a>.
+            <br>Consolidated some of VA's cities into their respective counties to try and get closer to 88 - Ended up with 107 counties/keys.</p>
+    </footer>
 
+    <script>
         var options = {
 
             zoomControl: false,
             dragging: false,
             scrollWheelZoom: false
         };
-        
+
         var styleOptions = {
-            
+
             color: '#1f78b4',
             fillColor: '#dddddd',
             weight: 1,
             fillOpacity: 1
-            
         };
 
         var map = L.map('map', options);
-        
-        map.doubleClickZoom.disable(); 
+        var synth1 = new Tone.Synth().toMaster();
 
-        $.getJSON('va.json', function(counties) {
+        map.doubleClickZoom.disable();
+
+        $.getJSON('va.json', function (counties) {
 
                 Papa.parse('va-piano.csv', {
 
                     download: true,
                     header: true,
-                    complete: function(data) {
+                    complete: function (data) {
 
                         processData(counties, data);
                     }
                 });
             })
-            .fail(function() {
+            .fail(function () {
 
                 console.log("error!");
             });
@@ -101,32 +100,33 @@
 
                     if (props.COUNTY == data.data[d].COUNTY) {
 
+                        counties.features[county].properties["note"] = data.data[d].key + data.data[d].octave;
                         counties.features[county].properties["key"] = data.data[d].key;
                         counties.features[county].properties["octave"] = data.data[d].octave;
                         break;
                     };
                 };
             };
-            
+
             drawMap(counties);
         }
 
         function drawMap(counties) {
 
             var dataLayer = L.geoJson(counties, {
-                
-                style:  styleOptions 
-                
+
+                style: styleOptions
+
             }).addTo(map);
 
             map.fitBounds(dataLayer.getBounds());
             map.setZoom(map.getZoom());
 
-            dataLayer.eachLayer(function(layer) {
+            dataLayer.eachLayer(function (layer) {
 
                 var props = layer.feature.properties;
 
-                layer.on('mouseover', function() {
+                layer.on('mouseover', function () {
 
                     this.setStyle({
                         color: 'yellow',
@@ -136,37 +136,65 @@
                     layer.bringToFront();
                 });
 
-                layer.on('mouseout', function() {
+                layer.on('mouseout', function () {
 
                     this.setStyle(styleOptions);
                 });
 
-                layer.on('mousedown', function() {
-                    
-                    playPiano(this);
+                   layer.on('mousedown', function() {
+
+                        playPiano(this);
+                    });
+
+                    layer.on('mouseup', function() {
+
+                        this.setStyle(styleOptions);
+                    });
                 });
+
+                playChords(dataLayer);
+        }
+
+        function playPiano(layer) {
+
+           layer.setStyle({
+               
+                    color: '#1f78b4',
+                    fillColor: '#000'
+               
+                });
+
+            layer.bringToFront();
+
+            var props = layer.feature.properties;
+
+            synth1.triggerAttackRelease(props["note"], "6n");
+
+        }
+        
+        function playChords(dataLayer) {
+
+            $('#c4').mousedown(function () {
+
+                dataLayer.eachLayer(function (layer) {
+
+                    var props = layer.feature.properties;
+
+                    if (props["note"] == "C4" || props["note"] == "E4" || props["note"] == "G4") {
+
+                        playPiano(layer);
+                    };
+                });
+            });
+            
+            $('#c4').mouseup(function () {
                 
-                layer.on('mouseup', function () {
+                dataLayer.eachLayer(function (layer) {
                     
-                    this.setStyle(styleOptions); 
+                    layer.setStyle(styleOptions);
                 });
             });
         }
-
-        function playPiano(x) {
-            
-            x.setStyle({
-                color: '#1f78b4',
-                fillColor: '#000'
-            });
-            
-            x.bringToFront();
-            
-            var props = x.feature.properties;
-            
-            piano.play(props['key'], props['octave'], 2);
-        }
-
     </script>
 </body>
 
