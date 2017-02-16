@@ -14,32 +14,29 @@
     <script src="https://code.jquery.com/jquery-1.12.2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
 
-<style>
-    
-    html {
-        margin: 10px auto 10px auto;
-        width: 80%;
-        font-family: "Noto Sans", sans-serif;
-    }
-    body {
-        padding: 0;
-        background: whitesmoke;
-        color: #3d3d3d;
-    }
-    
-    h1 {
-        font-family: "Noto Sans", sans-serif;
-      /*  text-align: center; */
-    }
-    
-    #map {
-       /* width: 80%; */
-        height: 540px;
-        background: whitesmoke;
-        border: 2px solid #dddedf;
-    }
-    
-</style>
+    <style>
+        html {
+            margin: 10px auto 10px auto;
+            width: 80%;
+            font-family: "Noto Sans", sans-serif;
+        }
+        
+        body {
+            padding: 0;
+            background: whitesmoke;
+            color: #3d3d3d;
+        }
+        
+        h1 {
+            font-family: "Noto Sans", sans-serif;
+        }
+        
+        #map {
+            height: 540px;
+            background: whitesmoke;
+            border: 2px solid #dddedf;
+        }
+    </style>
 </head>
 
 <body>
@@ -58,12 +55,14 @@
 
             zoomControl: false,
             dragging: false,
-            scrollWheelZoom: false
+            scrollWheelZoom: false,
+            zoomSnap: .5
+            
         };
 
         var styleOptions = {
 
-            color: '#1f78b4',
+            color: '#000',
             fillColor: '#dddddd',
             weight: 1,
             fillOpacity: 1
@@ -115,54 +114,81 @@
 
             var dataLayer = L.geoJson(counties, {
 
-                style: styleOptions
+                style: function(feature) {
+                    
+                    if(feature.properties["note"].includes("#")) {
+                       
+                       return {
+                       
+                            color: '#000',
+                            fillColor: '#000',
+                            weight: 1,
+                            fillOpacity: 0.7
+                       
+                        };
+                       
+                       } else {
+                           
+                           return styleOptions;
+                       }
+                }
 
             }).addTo(map);
 
             map.fitBounds(dataLayer.getBounds());
-            map.setZoom(map.getZoom());
 
             dataLayer.eachLayer(function (layer) {
 
                 var props = layer.feature.properties;
 
-                layer.on('mouseover', function () {
+                highlightFeature(layer);
+                resetHighlight(dataLayer, layer);
+                playChords(dataLayer, layer);
 
-                    this.setStyle({
-                        color: 'yellow',
-                        weight: 2
-                    });
+            });
+        }
 
-                    layer.bringToFront();
+        function highlightFeature(layer) {
+
+            layer.on('mouseover', function () {
+
+                this.setStyle({
+                    color: '#ffff00',
+                    weight: 2
                 });
 
-                layer.on('mouseout', function () {
+                layer.bringToFront();
+            });
 
-                    this.setStyle(styleOptions);
-                });
+            layer.on('mousedown', function () {
 
-                   layer.on('mousedown', function() {
+                playPiano(this);
+            });
+        }
 
-                        playPiano(this);
-                    });
+        function resetHighlight(dataLayer, layer) {
 
-                    layer.on('mouseup', function() {
+            layer.on('mouseout', function () {
 
-                        this.setStyle(styleOptions);
-                    });
-                });
+                dataLayer.resetStyle(layer);
+            });
 
-                playChords(dataLayer);
+            layer.on('mouseup', function () {
+
+                dataLayer.resetStyle(layer);
+
+            });
         }
 
         function playPiano(layer) {
 
-           layer.setStyle({
-               
-                    color: '#1f78b4',
-                    fillColor: '#000'
-               
-                });
+            layer.setStyle({
+
+                color: '#ffff00',
+                fillColor: '#000',
+                fillOpacity: 1
+
+            });
 
             layer.bringToFront();
 
@@ -171,12 +197,10 @@
             synth1.triggerAttackRelease(props["note"], "6n");
 
         }
-        
-        function playChords(dataLayer) {
+
+        function playChords(dataLayer, layer) {
 
             $('#c4').mousedown(function () {
-
-                dataLayer.eachLayer(function (layer) {
 
                     var props = layer.feature.properties;
 
@@ -184,17 +208,15 @@
 
                         playPiano(layer);
                     };
-                });
             });
-            
+
             $('#c4').mouseup(function () {
+
+               dataLayer.resetStyle(layer);
                 
-                dataLayer.eachLayer(function (layer) {
-                    
-                    layer.setStyle(styleOptions);
-                });
             });
         }
+        
     </script>
 </body>
 
