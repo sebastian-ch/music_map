@@ -124,7 +124,6 @@
                             fillColor: '#000',
                             weight: 1,
                             fillOpacity: 0.7
-                       
                         };
                        
                        } else {
@@ -144,7 +143,6 @@
                 highlightFeature(layer);
                 resetHighlight(dataLayer, layer);
                 playChords(dataLayer, layer);
-
             });
         }
 
@@ -188,7 +186,6 @@
                 fillColor: '#000',
                 fillOpacity: 1,
                 weight: 2
-
             });
 
             layer.bringToFront();
@@ -196,7 +193,6 @@
             var props = layer.feature.properties;
 
             synth1.triggerAttackRelease(props["note"], "6n");
-
         }
 
         function playChords(dataLayer, layer) {
@@ -214,7 +210,6 @@
             $('#c4').mouseup(function () {
 
                dataLayer.resetStyle(layer);
-                
             });
         }
         
