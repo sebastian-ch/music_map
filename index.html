@@ -14,32 +14,31 @@
     <script src="https://code.jquery.com/jquery-1.12.2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
 
-<style>
-    
-    html {
-        margin: 10px auto 10px auto;
-        width: 80%;
-        font-family: "Noto Sans", sans-serif;
-    }
-    body {
-        padding: 0;
-        background: whitesmoke;
-        color: #3d3d3d;
-    }
-    
-    h1 {
-        font-family: "Noto Sans", sans-serif;
-      /*  text-align: center; */
-    }
-    
-    #map {
-       /* width: 80%; */
-        height: 540px;
-        background: whitesmoke;
-        border: 2px solid #dddedf;
-    }
-    
-</style>
+    <style>
+        html {
+            margin: 10px auto 10px auto;
+            width: 80%;
+            font-family: "Noto Sans", sans-serif;
+        }
+        
+        body {
+            padding: 0;
+            background: whitesmoke;
+            color: #3d3d3d;
+        }
+        
+        h1 {
+            font-family: "Noto Sans", sans-serif;
+            /*  text-align: center; */
+        }
+        
+        #map {
+            /* width: 80%; */
+            height: 540px;
+            background: whitesmoke;
+            border: 2px solid #dddedf;
+        }
+    </style>
 </head>
 
 <body>
@@ -48,6 +47,7 @@
     <div id='map'></div>
     <br>
     <button id='c4'>C Chord</button>
+    <button id='lamb'>Mary Had A Little Lamb</button>
     <footer>
         <p>Inspired by <a href="http://andywoodruff.com/blog/the-music-of-geography-ohio-is-a-piano/" target="_blank">Andy Woodruff -The Music of Geography</a>.
             <br>Consolidated some of VA's cities into their respective counties to try and get closer to 88 - Ended up with 107 counties/keys.</p>
@@ -70,7 +70,8 @@
         };
 
         var map = L.map('map', options);
-        var synth1 = new Tone.Synth().toMaster();
+        
+        var synth = new Tone.FMSynth().toMaster();
 
         map.doubleClickZoom.disable();
 
@@ -141,37 +142,38 @@
                     this.setStyle(styleOptions);
                 });
 
-                   layer.on('mousedown', function() {
+                layer.on('mousedown', function () {
 
-                        playPiano(this);
-                    });
-
-                    layer.on('mouseup', function() {
-
-                        this.setStyle(styleOptions);
-                    });
+                    playPiano(this);
                 });
 
-                playChords(dataLayer);
+                layer.on('mouseup', function () {
+
+                    this.setStyle(styleOptions);
+                });
+            });
+
+            playChords(dataLayer);
+            maryHadALittleLamb(dataLayer);
         }
 
         function playPiano(layer) {
 
-           layer.setStyle({
-               
-                    color: '#1f78b4',
-                    fillColor: '#000'
-               
-                });
+            layer.setStyle({
+
+                color: '#1f78b4',
+                fillColor: '#000'
+
+            });
 
             layer.bringToFront();
 
             var props = layer.feature.properties;
 
-            synth1.triggerAttackRelease(props["note"], "6n");
+            synth.triggerAttackRelease(props["note"], "6n");
 
         }
-        
+
         function playChords(dataLayer) {
 
             $('#c4').mousedown(function () {
@@ -186,15 +188,49 @@
                     };
                 });
             });
-            
+
             $('#c4').mouseup(function () {
-                
+
                 dataLayer.eachLayer(function (layer) {
-                    
+
                     layer.setStyle(styleOptions);
                 });
             });
         }
+
+        function maryHadALittleLamb(dataLayer) {
+
+            var allNotes = ["B3","A3","G3",
+                "A3",
+                "B3",
+                "B3",
+                "B3"
+            ];
+            
+            var part = new Tone.Part(function(time, event){
+
+                synth.triggerAttackRelease(event.note, event.dur, time)
+            }, [
+                { time: 0,    note: 'B3', dur: '8n'},
+                { time: 0.8,  note: 'A3', dur: '8n'},
+                { time: 1.6,    note: 'G3', dur: '8n'},
+                { time: 2.4,  note: 'A3', dur: '8n'},
+                { time: 3.2,    note: 'B3', dur: '8n'},
+                { time: 4.0,  note: 'B3', dur: '8n'},
+                { time: 4.8,    note: 'B3', dur: '8n'}
+               ])
+            
+            part.start(0);
+            
+                
+            $('#lamb').toggle(function () {
+                
+                Tone.Transport.start('+0.1');
+                
+                });
+        };
+
+            
     </script>
 </body>
 
